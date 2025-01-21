@@ -1,0 +1,79 @@
+{
+  "version": "0",
+  "id": "cd4d811e-9b9f-4eef-a8fb-e4f3c9631025",
+  "detail-type": "Config Configuration Item Change",
+  "source": "aws.config",
+  "account": "123456789012",
+  "time": "2024-01-20T14:30:00Z",
+  "region": "us-east-1",
+  "resources": ["arn:aws:s3:::example-bucket-name"],
+  "detail": {
+    "recordVersion": "1.3",
+    "messageType": "ConfigurationItemChangeNotification",
+    "configurationItemDiff": {
+      "changedProperties": {
+        "Configuration.ServerSideEncryptionConfiguration": {
+          "updatedValue": {
+            "Rules": [
+              {
+                "ApplyServerSideEncryptionByDefault": {
+                  "SSEAlgorithm": "AES256"
+                }
+              }
+            ]
+          },
+          "changeType": "CREATE"
+        },
+        "Configuration.VersioningConfiguration.Status": {
+          "updatedValue": "Enabled",
+          "changeType": "UPDATE"
+        }
+      },
+      "changeType": "UPDATE"
+    },
+    "notificationCreationTime": "2024-01-20T14:30:01.123Z",
+    "configurationItem": {
+      "relatedEvents": [],
+      "relationships": [],
+      "configuration": {
+        "Name": "example-bucket-name",
+        "CreationDate": "2024-01-01T00:00:00.000Z",
+        "ServerSideEncryptionConfiguration": {
+          "Rules": [
+            {
+              "ApplyServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        }
+      },
+      "supplementaryConfiguration": {},
+      "tags": {
+        "Environment": "Production",
+        "Project": "TestProject"
+      },
+      "configurationItemVersion": "1.3",
+      "configurationItemCaptureTime": "2024-01-20T14:30:00.000Z",
+      "configurationStateId": 1705760100000,
+      "awsAccountId": "123456789012",
+      "configurationItemStatus": "OK",
+      "resourceType": "AWS::S3::Bucket",
+      "resourceId": "example-bucket-name",
+      "resourceName": "example-bucket-name",
+      "ARN": "arn:aws:s3:::example-bucket-name",
+      "awsRegion": "us-east-1",
+      "availabilityZone": "Regional",
+      "configurationStateMd5Hash": ""
+    }
+  }
+}
