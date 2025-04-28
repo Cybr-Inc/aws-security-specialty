@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template to create EventBridge Rule that monitors S3 bucket updates via AWS Config and sends notifications to an existing SNS topic'
+
+Parameters:
+  SecurityTeamTopicArn:
+    Type: String
+    Description: ARN of the existing SecurityTeam SNS Topic
+    Default: arn:aws:sns:us-east-1:851725223689:SecurityTeam
+
+Resources:
+  S3BucketUpdateRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: S3BucketUpdateNotificationRule
+      Description: Rule to detect S3 bucket updates from AWS Config notifications
+      State: ENABLED
+      EventPattern:
+        source:
+          - aws.config
+        detail-type:
+          - Config Configuration Item Change
+        detail:
+          messageType:
+            - ConfigurationItemChangeNotification
+          configurationItem:
+            resourceType:
+              - AWS::S3::Bucket
+            changeType:
+              - UPDATE
+      Targets:
+        - Arn: !Ref SecurityTeamTopicArn
+          Id: S3UpdateNotificationSNSTarget
+
+  SNSPublishPolicy:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: SNSPublishPermission
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'sns:Publish'
+                Resource: !Ref SecurityTeamTopicArn
+
+Outputs:
+  RuleArn:
+    Description: ARN of the EventBridge Rule
+    Value: !GetAtt S3BucketUpdateRule.Arn
