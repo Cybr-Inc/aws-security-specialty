@@ -25,6 +25,7 @@ Resources:
           configurationItem:
             resourceType:
               - AWS::S3::Bucket
+          configurationItemDiff:
             changeType:
               - UPDATE
       Targets:
