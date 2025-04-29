@@ -1,0 +1,14 @@
+
+// This goes in the input path field
+
+{ 
+  "bucketName": "$.detail.configurationItem.resourceName", 
+  "changeType": "$.detail.configurationItemDiff.changeType", 
+  "captureTime": "$.detail.configurationItem.configurationItemCaptureTime", 
+  "awsRegion": "$.region", 
+  "awsAccount": "$.account" 
+}
+
+// This goes in the Template field (feel free to customize the wording but not the variables unless you also change them above)
+
+"S3 Bucket Security Alert: Bucket <bucketName> had a <changeType> change at <captureTime> in account <awsAccount> region <awsRegion>. Please investigate this change."
