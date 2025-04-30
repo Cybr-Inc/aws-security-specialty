@@ -1,0 +1,44 @@
+{
+  "Description": "Protect credit card information",
+  "Version": "2021-06-01",
+  "Statement": [
+    {
+      "DataDirection": "Inbound",
+      "DataIdentifier": [
+        "arn:aws:dataprotection::aws:data-identifier/CreditCardNumber"
+      ],
+      "Operation": {
+        "Audit": {
+          "FindingsDestination": {
+            "CloudWatchLogs": {
+              "LogGroup": "/aws/vendedlogs/sns-data-protection-audit"
+            }
+          },
+          "SampleRate": "99"
+        }
+      },
+      "Principal": [
+        "*"
+      ],
+      "Sid": "audit-all-messages"
+    },
+    {
+      "DataDirection": "Outbound",
+      "DataIdentifier": [
+        "arn:aws:dataprotection::aws:data-identifier/CreditCardNumber"
+      ],
+      "Operation": {
+        "Deidentify": {
+          "MaskConfig": {
+            "MaskWithCharacter": "X"
+          }
+        }
+      },
+      "Principal": [
+        "*"
+      ],
+      "Sid": "mask-for-email"
+    }
+  ],
+  "Name": "credit-card-protection"
+}

@@ -1,0 +1,215 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for SNS Data Protection with Lambda testing'
+
+Parameters:
+  EmailSubscriber:
+    Type: String
+    Description: Email address to receive SNS notifications
+    AllowedPattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    ConstraintDescription: Must be a valid email address
+  
+  TopicName:
+    Type: String
+    Description: Name of the SNS topic
+    Default: CreditCardProtectionTopic
+    
+Resources:
+  # CloudWatch Logs group for data protection audit logs
+  SNSDataProtectionAuditLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/vendedlogs/sns-data-protection-audit
+      RetentionInDays: 14
+  
+  # Resource policy for the CloudWatch Logs group to allow SNS to write to it
+  SNSDataProtectionAuditLogsPolicy:
+    Type: AWS::Logs::ResourcePolicy
+    Properties:
+      PolicyName: SNSDataProtectionAuditLogsPolicy
+      PolicyDocument: !Sub |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "sns.amazonaws.com"
+              },
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+              ],
+              "Resource": "${SNSDataProtectionAuditLogs.Arn}"
+            }
+          ]
+        }
+  
+  # SNS Topic with data protection policy
+  CreditCardProtectionTopic:
+    Type: AWS::SNS::Topic
+    DependsOn: 
+      - SNSDataProtectionAuditLogs
+      - SNSDataProtectionAuditLogsPolicy
+    Properties:
+      TopicName: !Ref TopicName
+      DisplayName: CC Protection Topic
+      DataProtectionPolicy:
+        Name: credit-card-protection
+        Description: Protect credit card information
+        Version: 2021-06-01
+        Statement:
+          - Sid: audit-all-messages
+            DataDirection: Inbound
+            Principal: ["*"]
+            DataIdentifier:
+              - "arn:aws:dataprotection::aws:data-identifier/CreditCardNumber"
+            Operation:
+              Audit:
+                SampleRate: 99
+                FindingsDestination:
+                  CloudWatchLogs:
+                    LogGroup: !Ref SNSDataProtectionAuditLogs
+          - Sid: mask-for-email
+            DataDirection: Outbound
+            Principal: ["*"]
+            DataIdentifier:
+              - "arn:aws:dataprotection::aws:data-identifier/CreditCardNumber"
+            Operation:
+              Deidentify:
+                MaskConfig:
+                  MaskWithCharacter: "X"
+  
+  # Email subscription to the SNS topic
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn: !Ref CreditCardProtectionTopic
+      Endpoint: !Ref EmailSubscriber
+  
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SNSPublishPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${TopicName}"
+  
+  # Lambda function for testing credit card transactions
+  TestCreditCardFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: TestCreditCardTransaction
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          TOPIC_ARN: !Ref CreditCardProtectionTopic
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+          import uuid
+          from datetime import datetime
+          import os
+
+          def lambda_handler(event, context):
+              # Get parameters from event or environment variables
+              topic_arn = event.get('topic_arn') or os.environ.get('TOPIC_ARN')
+              cc_number = event.get('cc_number') or "4539894458086459"  # Default test Visa
+              
+              if not topic_arn:
+                  return {
+                      'statusCode': 400,
+                      'body': 'Missing required parameter: topic_arn'
+                  }
+              
+              # Create transaction object
+              transaction = {
+                  "orderId": "ORD-12345",
+                  "customerName": "Jane Smith",
+                  "amount": 129.99,
+                  "paymentInfo": {
+                      "cardType": "Visa",
+                      "cardNumber": cc_number,
+                      "expiryDate": "12/25"
+                  }
+              }
+              
+              # Publish to SNS
+              try:
+                  sns = boto3.client('sns')
+                  response = sns.publish(
+                      TopicArn=topic_arn,
+                      Message=json.dumps(transaction),
+                      Subject='Test Credit Card Transaction'
+                  )
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': {
+                          'message': 'Transaction published successfully',
+                          'messageId': response['MessageId'],
+                          'transaction': transaction,
+                          'verification': [
+                              'Check CloudWatch logs in the "/aws/vendedlogs/sns-data-protection-audit" log group',
+                              'Verify redaction/masking applied based on your policy'
+                          ]
+                      }
+                  }
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'body': f'Error publishing message: {str(e)}'
+                  }
+      Timeout: 10
+      MemorySize: 128
+
+Outputs:
+  SNSTopicARN:
+    Description: ARN of the SNS topic with data protection
+    Value: !Ref CreditCardProtectionTopic
+  
+  LambdaFunctionARN:
+    Description: ARN of the Lambda function for testing
+    Value: !GetAtt TestCreditCardFunction.Arn
+  
+  TestInstructions:
+    Description: Instructions for testing the deployment
+    Value: !Sub |
+      1. Confirm the email subscription sent to ${EmailSubscriber}
+      
+      2. Invoke the Lambda function using one of these methods:
+      
+         # For AWS CLI v1 or if you've configured CLI binary format:
+         aws lambda invoke --function-name TestCreditCardTransaction --payload '{"cc_number":"4539894458086459"}' response.json
+         
+         # For AWS CLI v2 (recommended):
+         aws lambda invoke --function-name TestCreditCardTransaction --payload '{"cc_number":"4539894458086459"}' --cli-binary-format raw-in-base64-out response.json
+         
+         # Alternative file-based approach (most reliable):
+         echo '{"cc_number":"4539894458086459"}' > payload.json
+         aws lambda invoke --function-name TestCreditCardTransaction --payload file://payload.json response.json
+      
+         Note: AWS CLI v2 changed how binary payloads are handled, requiring the --cli-binary-format flag.
+         To make this setting permanent: aws configure set cli-binary-format raw-in-base64-out
+      
+      3. Check CloudWatch logs in the "/aws/vendedlogs/sns-data-protection-audit" log group for audit findings
+      
+      4. Verify the email received has masked credit card numbers (XXXX-XXXX-XXXX-XXXX)
