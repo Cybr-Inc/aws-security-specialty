@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template to create an S3 bucket for AWS Config Conforms with appropriate bucket policy'
+
+Parameters:
+  OrganizationId:
+    Type: String
+    Description: 'Your AWS Organization ID'
+    AllowedPattern: '^o-[a-z0-9]{10,32}$'
+    ConstraintDescription: 'Must be a valid AWS Organization ID (starts with o- followed by 10-32 alphanumeric characters)'
+  
+  BucketSuffix:
+    Type: String
+    Description: 'Suffix to append to the bucket name (awsconfigconforms-{suffix})'
+    AllowedPattern: '^[a-z0-9-]{1,48}$'
+    ConstraintDescription: 'Suffix must be 1-48 characters, lowercase letters, numbers, and hyphens only'
+    MinLength: 1
+    MaxLength: 48
+
+Resources:
+  ConfigConformsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join 
+        - '-'
+        - - 'awsconfigconforms'
+          - !Ref BucketSuffix
+
+  ConfigConformsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ConfigConformsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowGetPutObject
+            Effect: Allow
+            Principal: '*'
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource: !Join ['', [!GetAtt ConfigConformsBucket.Arn, '/*']]
+            Condition:
+              StringEquals:
+                aws:PrincipalOrgID: !Ref OrganizationId
+              ArnLike:
+                aws:PrincipalArn: 'arn:aws:iam::*:role/aws-service-role/config-conforms.amazonaws.com/AWSServiceRoleForConfigConforms'
+          - Sid: AllowGetBucketAcl
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetBucketAcl
+            Resource: !GetAtt ConfigConformsBucket.Arn
+            Condition:
+              StringEquals:
+                aws:PrincipalOrgID: !Ref OrganizationId
+              ArnLike:
+                aws:PrincipalArn: 'arn:aws:iam::*:role/aws-service-role/config-conforms.amazonaws.com/AWSServiceRoleForConfigConforms'
+
+Outputs:
+  BucketName:
+    Description: 'Name of the created S3 bucket'
+    Value: !Ref ConfigConformsBucket
+  BucketArn:
+    Description: 'ARN of the created S3 bucket'
+    Value: !GetAtt ConfigConformsBucket.Arn
