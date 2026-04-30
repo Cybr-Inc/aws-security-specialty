@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Gateway – Advanced Security</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0b0f19;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 40px;
+  }
+
+  h1 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 5px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+    color: #1e293b;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  /* ── Tab switcher ── */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 30px;
+    background: #0f172a;
+    padding: 5px;
+    border-radius: 14px;
+    border: 1px solid #1e293b;
+  }
+
+  .tab {
+    padding: 8px 20px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .tab.active {
+    background: #1e293b;
+    color: #e2e8f0;
+  }
+
+  /* ── Shared canvas ── */
+  .canvas {
+    width: 100%;
+    max-width: 800px;
+    display: none;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .canvas.visible { display: flex; }
+
+  /* ── Row = one horizontal lane ── */
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    position: relative;
+    padding: 8px 0;
+  }
+
+  /* ── Node ── */
+  .node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .node-box {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    border: 2px solid transparent;
+    transition: all 0.22s ease;
+    position: relative;
+  }
+
+  .node-box svg { width: 40px; height: 40px; }
+
+  .node:hover .node-box { transform: translateY(-3px); }
+  .node.sel .node-box   { transform: translateY(-4px); }
+
+  .node-lbl {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #334155;
+    text-align: center;
+    transition: color 0.2s;
+    max-width: 76px;
+    line-height: 1.3;
+  }
+
+  .node.sel .node-lbl { color: #94a3b8; }
+
+  /* colour themes */
+  .nc-purple .node-box { background: #160d27; border-color: #3b1d6e; }
+  .nc-purple.sel .node-box { border-color: #a78bfa; box-shadow: 0 0 0 4px rgba(167,139,250,.12), 0 14px 28px #000; }
+
+  .nc-red .node-box { background: #1c0606; border-color: #7f1d1d; }
+  .nc-red.sel .node-box { border-color: #f87171; box-shadow: 0 0 0 4px rgba(248,113,113,.12), 0 14px 28px #000; }
+
+  .nc-green .node-box { background: #061410; border-color: #14532d; }
+  .nc-green.sel .node-box { border-color: #4ade80; box-shadow: 0 0 0 4px rgba(74,222,128,.12), 0 14px 28px #000; }
+
+  .nc-blue .node-box { background: #05101f; border-color: #1e3a5f; }
+  .nc-blue.sel .node-box { border-color: #60a5fa; box-shadow: 0 0 0 4px rgba(96,165,250,.12), 0 14px 28px #000; }
+
+  .nc-amber .node-box { background: #1c0a00; border-color: #7c2d12; }
+  .nc-amber.sel .node-box { border-color: #fb923c; box-shadow: 0 0 0 4px rgba(251,146,60,.12), 0 14px 28px #000; }
+
+  .nc-cyan .node-box { background: #00131c; border-color: #0e4f61; }
+  .nc-cyan.sel .node-box { border-color: #22d3ee; box-shadow: 0 0 0 4px rgba(34,211,238,.12), 0 14px 28px #000; }
+
+  .nc-indigo .node-box { background: #0c0d25; border-color: #312e81; }
+  .nc-indigo.sel .node-box { border-color: #818cf8; box-shadow: 0 0 0 4px rgba(129,140,248,.12), 0 14px 28px #000; }
+
+  .nc-teal .node-box { background: #061414; border-color: #134e4a; }
+  .nc-teal.sel .node-box { border-color: #2dd4bf; box-shadow: 0 0 0 4px rgba(45,212,191,.12), 0 14px 28px #000; }
+
+  /* ── Connector ── */
+  .conn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 0 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .conn-lbl {
+    font-size: 9.5px;
+    color: #1e3a5f;
+    letter-spacing: 0.04em;
+    transition: color .3s;
+    white-space: nowrap;
+  }
+
+  .conn-lbl.lit { color: #60a5fa; }
+
+  .conn-track {
+    width: 100%;
+    height: 2px;
+    background: #1e293b;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: background .3s;
+  }
+
+  .conn-track::after {
+    content: '';
+    position: absolute;
+    right: -1px; top: 50%;
+    transform: translateY(-50%);
+    border-left: 7px solid #1e293b;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    transition: border-color .3s;
+  }
+
+  .conn-track.lit { background: #1e3a5f; }
+  .conn-track.lit::after { border-left-color: #3b82f6; }
+
+  @keyframes pkt { 0%{left:-12px;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:100%;opacity:0} }
+
+  .pkt {
+    display: none;
+    position: absolute;
+    top: 50%; left: -12px;
+    transform: translateY(-50%);
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #3b82f6;
+    box-shadow: 0 0 8px #3b82f6;
+    animation: pkt 1.4s linear infinite;
+  }
+
+  .pkt.show { display: block; }
+
+  /* ── Vertical connector (down arrow) ── */
+  .vconn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 0;
+  }
+
+  .vconn-line {
+    width: 2px;
+    height: 36px;
+    background: #1e293b;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: background .3s;
+  }
+
+  .vconn-line.lit { background: #1e3a5f; }
+
+  @keyframes vpkt { 0%{top:-12px;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{top:100%;opacity:0} }
+
+  .vpkt {
+    display: none;
+    position: absolute;
+    left: 50%; top: -12px;
+    transform: translateX(-50%);
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #3b82f6;
+    box-shadow: 0 0 8px #3b82f6;
+    animation: vpkt 1.4s linear infinite;
+  }
+
+  .vpkt.show { display: block; }
+
+  .vconn-arrow {
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid #1e293b;
+    transition: border-top-color .3s;
+  }
+
+  .vconn-arrow.lit { border-top-color: #3b82f6; }
+
+  .vconn-lbl {
+    font-size: 9.5px;
+    color: #1e3a5f;
+    letter-spacing: 0.04em;
+    transition: color .3s;
+  }
+
+  .vconn-lbl.lit { color: #60a5fa; }
+
+  /* ── VPC box ── */
+  .vpc-box {
+    border: 2px dashed #1e3a5f;
+    border-radius: 18px;
+    padding: 18px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .vpc-label {
+    position: absolute;
+    top: -11px;
+    left: 18px;
+    background: #0b0f19;
+    padding: 0 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #1e4d8c;
+    text-transform: uppercase;
+  }
+
+  .vpc-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* ── Info panel ── */
+  .panel {
+    width: 100%;
+    max-width: 800px;
+    margin-top: 24px;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    padding: 20px 22px;
+    min-height: 130px;
+    transition: all .22s;
+  }
+
+  .panel-hd {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 10px;
+  }
+
+  .panel-ico { font-size: 20px; }
+
+  .panel-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+
+  .panel-body {
+    font-size: 13px;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    margin: 2px 3px;
+  }
+
+  .chip.purple { background: #2e1065; color: #c4b5fd; }
+  .chip.red    { background: #450a0a; color: #fca5a5; }
+  .chip.green  { background: #052e16; color: #86efac; }
+  .chip.blue   { background: #0c1a33; color: #93c5fd; }
+  .chip.amber  { background: #431407; color: #fed7aa; }
+  .chip.cyan   { background: #083344; color: #67e8f9; }
+  .chip.teal   { background: #042f2e; color: #5eead4; }
+  .chip.indigo { background: #1e1b4b; color: #a5b4fc; }
+</style>
+</head>
+<body>
+
+<h1>API Gateway — Advanced Security</h1>
+<p class="subtitle">Click any component to explore it &nbsp;&bull;&nbsp; Switch between patterns</p>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('edge')">🌐 Edge Security (CloudFront + WAF)</button>
+  <button class="tab"        onclick="switchTab('vpc')">🔒 Private VPC Access (VPC Links)</button>
+</div>
+
+
+<!-- ══════════════ TAB 1: CloudFront + WAF ══════════════ -->
+<div class="canvas visible" id="tab-edge">
+
+  <div class="row">
+    <div class="node nc-blue sel" id="e-client" onclick="epick('client')">
+      <div class="node-box">🖥️</div>
+      <div class="node-lbl">Client</div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-lbl lit">HTTPS</div>
+      <div class="conn-track lit"><div class="pkt show"></div></div>
+    </div>
+
+    <div class="node nc-purple" id="e-cf" onclick="epick('cf')">
+      <div class="node-box"><svg height="40" width="40" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="cf-grad"><stop stop-color="#4D27A8" offset="0%"/><stop stop-color="#A166FF" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h40v40H0z" fill="url(#cf-grad)"/><path d="M28 26.497c0-.828-.673-1.5-1.5-1.5s-1.5.672-1.5 1.5c0 .827.673 1.5 1.5 1.5s1.5-.673 1.5-1.5zm1 0a2.503 2.503 0 01-2.5 2.5 2.503 2.503 0 01-2.5-2.5 2.503 2.503 0 012.5-2.501c1.379 0 2.5 1.122 2.5 2.5zm-14-8.004c0-.827-.673-1.5-1.5-1.5s-1.5.673-1.5 1.5c0 .828.673 1.501 1.5 1.501s1.5-.673 1.5-1.5zm1 0a2.503 2.503 0 01-2.5 2.502 2.503 2.503 0 01-2.5-2.502 2.503 2.503 0 012.5-2.5c1.379 0 2.5 1.122 2.5 2.5zm4-8.003c0 .827.673 1.5 1.5 1.5s1.5-.673 1.5-1.5-.673-1.5-1.5-1.5-1.5.673-1.5 1.5zm-1 0a2.503 2.503 0 012.5-2.501c1.379 0 2.5 1.122 2.5 2.501a2.503 2.503 0 01-2.5 2.501 2.503 2.503 0 01-2.5-2.5zm14 9.504c0-4.638-2.485-8.93-6.494-11.25-.721.145-1.416.344-2.28.657l-.34-.94a19.87 19.87 0 011.233-.405A12.95 12.95 0 0020 6.99c-.844 0-1.675.087-2.487.246.587.343 1.108.686 1.615 1.071l-.604.797c-.715-.543-1.457-1-2.426-1.51a13.016 13.016 0 00-9.007 10.963 17.602 17.602 0 013.116-.349l.025 1a16.32 16.32 0 00-3.218.389c-.004.132-.014.267-.014.398 0 4.335 2.146 8.33 5.676 10.736-.627-1.87-.95-3.638-.95-5.36 0-.985.169-1.793.347-2.649l.124-.602.981.193-.125.614c-.176.839-.327 1.562-.327 2.443 0 1.952.432 3.973 1.302 6.166a12.844 12.844 0 009.978.821c.502-.99.875-1.927 1.189-3.009l.961.28c-.228.787-.49 1.5-.801 2.21.804-.361 1.564-.81 2.279-1.33-.173-.426-.35-.85-.554-1.26l.895-.446c.171.343.313.701.463 1.054C31.335 27.377 33 23.83 33 19.995zm1 0c0 4.365-1.982 8.403-5.44 11.079a13.69 13.69 0 01-4.042 2.173c-1.44.5-2.961.754-4.518.754-2.3 0-4.584-.573-6.606-1.659A13.98 13.98 0 016.029 19.15C6.37 13.303 10.377 8.245 16 6.57c3.527-1.063 7.589-.632 10.842 1.208A14.015 14.015 0 0134 19.994zm-15.343-7.272l-.658-.753c-1.12.978-1.992 2.017-3.01 3.586l.838.544c.965-1.485 1.784-2.464 2.83-3.377zm-1.845 7.431c2.296.788 4.299 2.047 6.305 3.96l.69-.722c-2.113-2.018-4.233-3.347-6.67-4.184l-.325.946zm7.011-6.828c1.876 2.862 2.933 6.005 3.14 9.34l-.998.061c-.196-3.158-1.198-6.136-2.978-8.852l.836-.549z" fill="#FFF"/></g></svg></div>
+      <div class="node-lbl">CloudFront</div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-lbl lit">Filtered</div>
+      <div class="conn-track lit"><div class="pkt show"></div></div>
+    </div>
+
+    <div class="node nc-red" id="e-waf" onclick="epick('waf')">
+      <div class="node-box"><svg height="40" width="40" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="waf-grad"><stop stop-color="#BD0816" offset="0%"/><stop stop-color="#FF5252" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h40v40H0z" fill="url(#waf-grad)"/><path d="M8.138 21H7v-1h1.139a12.277 12.277 0 012.322-6.73l.811.585A11.28 11.28 0 009.139 20H11v1H9.138c.093 2.237.82 4.365 2.134 6.18l-.811.586A12.274 12.274 0 018.138 21zm19.609 9.556A12.25 12.25 0 0121 32.878V34h-1v-1.121a12.274 12.274 0 01-6.749-2.322l.586-.811A11.28 11.28 0 0020 31.879V30h1v1.878a11.26 11.26 0 006.161-2.131l.586.809zM13.251 10.479A12.267 12.267 0 0120 8.157V7h1v1.157c2.443.097 4.768.888 6.747 2.322l-.586.81A11.27 11.27 0 0021 9.157V11h-1V9.157c-2.23.096-4.352.822-6.163 2.133l-.586-.811zM34 20v1h-1.139a12.261 12.261 0 01-2.323 6.766l-.81-.586A11.276 11.276 0 0031.861 21H30v-1h1.86c-.1-2.225-.826-4.34-2.132-6.145l.81-.585A12.264 12.264 0 0132.86 20H34zm-6.294-7.396l3.78-3.78.707.707-3.78 3.781-.707-.708zM13.293 28.431l-3.78 3.78-.707-.707 3.78-3.78.707.707zm1.048-13.383L7.186 7.894l.707-.707 7.155 7.154-.707.707zm13.015 11.601l6.457 6.457-.707.707-6.457-6.457.707-.707zm-11.415-5.285c.042-.074.087-.148.133-.22.927-1.459.625-3.468.329-4.625.817.485 1.553 1.591 1.821 2.088a.472.472 0 00.479.261.497.497 0 00.433-.332c.83-2.358.362-4.107-.232-5.209a3.946 3.946 0 011.71 1.796c.771 1.603.6 3.794-.447 5.718-1.44 2.65-1.121 5.431-.792 6.88a12.413 12.413 0 01-2.236-1.215c-1.654-1.152-2.181-3.411-1.198-5.142zm7.338-.157a.5.5 0 00.807.468c.044-.035.949-.783 1.366-2.603.539.734 1.145 2.271.397 5.168-.726 2.814-4.19 3.581-5.367 3.762-.288-1.025-.906-3.98.564-6.683 1.062-1.952 1.319-4.167.733-5.96 1.037 1.148 1.957 3.001 1.5 5.848zm-8.207-.337c-1.236 2.176-.579 5.012 1.495 6.457.942.657 2.085 1.228 3.395 1.697a.527.527 0 00.169.029c.01 0 .02-.005.029-.006v.005c.229-.018 5.605-.485 6.658-4.562 1.354-5.249-1.349-6.801-1.465-6.865a.499.499 0 00-.737.387 6.643 6.643 0 01-.235 1.203c-.27-4.306-3.674-6.036-4.325-6.328-.677-.519-1.499-.875-2.454-1.045a.502.502 0 00-.407.877c.083.069 1.821 1.574 1.282 4.438-.617-.83-1.631-1.874-2.825-1.874a.5.5 0 00-.466.681c.011.029 1.12 2.952.044 4.643a4.464 4.464 0 00-.158.263z" fill="#FFF"/></g></svg></div>
+      <div class="node-lbl">AWS WAF</div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-lbl lit">Clean traffic</div>
+      <div class="conn-track lit"><div class="pkt show"></div></div>
+    </div>
+
+    <div class="node nc-green" id="e-apigw" onclick="epick('apigw')">
+      <div class="node-box"><svg height="40" width="40" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="apigw-e-grad"><stop stop-color="#4D27A8" offset="0%"/><stop stop-color="#A166FF" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h40v40H0z" fill="url(#apigw-e-grad)"/><path d="M19 28h2v-1h-2v1zM14 7.262l-7 3.04v20.055l7 2.439V7.262zM15 13v14h2v1h-2v5.5a.5.5 0 01-.664.472l-8-2.787A.5.5 0 016 30.713V9.974c0-.199.118-.379.301-.458l8-3.474A.5.5 0 0115 6.5V12h2v1h-2zm18-2.698l-7-3.04v25.534l7-2.439V10.302zm1-.328v20.739a.5.5 0 01-.336.472l-8 2.787a.507.507 0 01-.454-.064.5.5 0 01-.21-.408V28h-2v-1h2V13h-2v-1h2V6.5a.5.5 0 01.699-.458l8 3.474a.499.499 0 01.301.458zM19 13h2v-1h-2v1zm4.975 2.658l-.95-.316-3 9 .95.316 3-9zm-4.829 7.196l-3-3a.502.502 0 010-.708l3-3 .708.708-2.647 2.646 2.647 2.646-.708.708z" fill="#FFF"/></g></svg></div>
+      <div class="node-lbl">API Gateway</div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-lbl lit">Invoke</div>
+      <div class="conn-track lit"><div class="pkt show"></div></div>
+    </div>
+
+    <div class="node nc-amber" id="e-lambda" onclick="epick('lambda')">
+      <div class="node-box"><svg height="40" width="40" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="lambda-e-grad"><stop stop-color="#C8511B" offset="0%"/><stop stop-color="#F90" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h40v40H0z" fill="url(#lambda-e-grad)"/><path d="M14.386 33H8.27l6.763-14.426 3.064 6.44L14.387 33zm1.085-15.798a.49.49 0 00-.442-.282h-.002a.493.493 0 00-.441.285l-7.538 16.08a.507.507 0 00.028.482c.09.145.247.233.415.233h7.206c.19 0 .363-.111.445-.286l3.944-8.489a.508.508 0 00-.002-.432l-3.613-7.591zM32.018 33h-5.882l-9.47-20.711a.491.491 0 00-.444-.289H12.37l.005-5h7.549l9.424 20.71c.08.177.256.29.446.29h2.224v5zm.49-6h-2.4L20.684 6.29a.492.492 0 00-.446-.29h-8.353a.496.496 0 00-.491.5l-.006 6c0 .132.052.259.144.354a.488.488 0 00.347.146h4.032l9.468 20.711c.08.176.254.289.445.289h6.686a.495.495 0 00.491-.5v-6c0-.276-.219-.5-.491-.5z" fill="#FFF"/></g></svg></div>
+      <div class="node-lbl">Lambda</div>
+    </div>
+  </div>
+
+</div><!-- /tab-edge -->
+
+
+<!-- ══════════════ TAB 2: VPC Links ══════════════ -->
+<div class="canvas" id="tab-vpc">
+
+  <div class="row">
+    <div class="node nc-blue sel" id="v-client" onclick="vpick('client')">
+      <div class="node-box">🖥️</div>
+      <div class="node-lbl">Client</div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-lbl lit">HTTPS</div>
+      <div class="conn-track lit"><div class="pkt show"></div></div>
+    </div>
+
+    <div class="node nc-green" id="v-apigw" onclick="vpick('apigw')">
+      <div class="node-box"><svg height="40" width="40" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="apigw-v-grad"><stop stop-color="#4D27A8" offset="0%"/><stop stop-color="#A166FF" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h40v40H0z" fill="url(#apigw-v-grad)"/><path d="M19 28h2v-1h-2v1zM14 7.262l-7 3.04v20.055l7 2.439V7.262zM15 13v14h2v1h-2v5.5a.5.5 0 01-.664.472l-8-2.787A.5.5 0 016 30.713V9.974c0-.199.118-.379.301-.458l8-3.474A.5.5 0 0115 6.5V12h2v1h-2zm18-2.698l-7-3.04v25.534l7-2.439V10.302zm1-.328v20.739a.5.5 0 01-.336.472l-8 2.787a.507.507 0 01-.454-.064.5.5 0 01-.21-.408V28h-2v-1h2V13h-2v-1h2V6.5a.5.5 0 01.699-.458l8 3.474a.499.499 0 01.301.458zM19 13h2v-1h-2v1zm4.975 2.658l-.95-.316-3 9 .95.316 3-9zm-4.829 7.196l-3-3a.502.502 0 010-.708l3-3 .708.708-2.647 2.646 2.647 2.646-.708.708z" fill="#FFF"/></g></svg></div>
+      <div class="node-lbl">API Gateway<br>(HTTP API)</div>
+    </div>
+
+    <div class="conn">
+      <div class="conn-lbl lit">VPC Link</div>
+      <div class="conn-track lit"><div class="pkt show"></div></div>
+    </div>
+
+    <!-- VPC bubble -->
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+      <div class="vpc-box">
+        <div class="vpc-label">Private VPC</div>
+
+        <div class="vpc-row">
+          <div class="node nc-indigo" id="v-alb" onclick="vpick('alb')">
+            <div class="node-box">⚖️</div>
+            <div class="node-lbl">App Load<br>Balancer</div>
+          </div>
+
+          <div class="conn" style="min-width:40px;">
+            <div class="conn-lbl" style="color:#312e81;font-size:9px">or</div>
+            <div class="conn-track" style="background:#1e1b4b;"></div>
+          </div>
+
+          <div class="node nc-teal" id="v-ecs" onclick="vpick('ecs')">
+            <div class="node-box">🐳</div>
+            <div class="node-lbl">ECS<br>Containers</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Old-way comparison row -->
+
+
+</div><!-- /tab-vpc -->
+
+
+<!-- Info panel -->
+<div class="panel">
+  <div class="panel-hd">
+    <span class="panel-ico" id="p-ico">🖥️</span>
+    <span class="panel-title" id="p-title">Client</span>
+  </div>
+  <div class="panel-body" id="p-body"></div>
+</div>
+
+<script>
+const SVG = {
+  apigw: `<svg height="22" width="22" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="si-apigw"><stop stop-color="#4D27A8" offset="0%"/><stop stop-color="#A166FF" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h22v22H0z" fill="url(#si-apigw)"/><path transform="scale(0.55)" d="M19 28h2v-1h-2v1zM14 7.262l-7 3.04v20.055l7 2.439V7.262zM15 13v14h2v1h-2v5.5a.5.5 0 01-.664.472l-8-2.787A.5.5 0 016 30.713V9.974c0-.199.118-.379.301-.458l8-3.474A.5.5 0 0115 6.5V12h2v1h-2zm18-2.698l-7-3.04v25.534l7-2.439V10.302zm1-.328v20.739a.5.5 0 01-.336.472l-8 2.787a.507.507 0 01-.454-.064.5.5 0 01-.21-.408V28h-2v-1h2V13h-2v-1h2V6.5a.5.5 0 01.699-.458l8 3.474a.499.499 0 01.301.458zM19 13h2v-1h-2v1zm4.975 2.658l-.95-.316-3 9 .95.316 3-9zm-4.829 7.196l-3-3a.502.502 0 010-.708l3-3 .708.708-2.647 2.646 2.647 2.646-.708.708z" fill="#FFF"/></g></svg>`,
+  lambda: `<svg height="22" width="22" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="si-lambda"><stop stop-color="#C8511B" offset="0%"/><stop stop-color="#F90" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h22v22H0z" fill="url(#si-lambda)"/><path transform="scale(0.55)" d="M14.386 33H8.27l6.763-14.426 3.064 6.44L14.387 33zm1.085-15.798a.49.49 0 00-.442-.282h-.002a.493.493 0 00-.441.285l-7.538 16.08a.507.507 0 00.028.482c.09.145.247.233.415.233h7.206c.19 0 .363-.111.445-.286l3.944-8.489a.508.508 0 00-.002-.432l-3.613-7.591zM32.018 33h-5.882l-9.47-20.711a.491.491 0 00-.444-.289H12.37l.005-5h7.549l9.424 20.71c.08.177.256.29.446.29h2.224v5zm.49-6h-2.4L20.684 6.29a.492.492 0 00-.446-.29h-8.353a.496.496 0 00-.491.5l-.006 6c0 .132.052.259.144.354a.488.488 0 00.347.146h4.032l9.468 20.711c.08.176.254.289.445.289h6.686a.495.495 0 00.491-.5v-6c0-.276-.219-.5-.491-.5z" fill="#FFF"/></g></svg>`,
+  cf: `<svg height="22" width="22" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="si-cf"><stop stop-color="#4D27A8" offset="0%"/><stop stop-color="#A166FF" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h22v22H0z" fill="url(#si-cf)"/><path transform="scale(0.55)" d="M28 26.497c0-.828-.673-1.5-1.5-1.5s-1.5.672-1.5 1.5c0 .827.673 1.5 1.5 1.5s1.5-.673 1.5-1.5zm1 0a2.503 2.503 0 01-2.5 2.5 2.503 2.503 0 01-2.5-2.5 2.503 2.503 0 012.5-2.501c1.379 0 2.5 1.122 2.5 2.5zm-14-8.004c0-.827-.673-1.5-1.5-1.5s-1.5.673-1.5 1.5c0 .828.673 1.501 1.5 1.501s1.5-.673 1.5-1.5zm1 0a2.503 2.503 0 01-2.5 2.502 2.503 2.503 0 01-2.5-2.502 2.503 2.503 0 012.5-2.5c1.379 0 2.5 1.122 2.5 2.5zm4-8.003c0 .827.673 1.5 1.5 1.5s1.5-.673 1.5-1.5-.673-1.5-1.5-1.5-1.5.673-1.5 1.5zm-1 0a2.503 2.503 0 012.5-2.501c1.379 0 2.5 1.122 2.5 2.501a2.503 2.503 0 01-2.5 2.501 2.503 2.503 0 01-2.5-2.5zm14 9.504c0-4.638-2.485-8.93-6.494-11.25-.721.145-1.416.344-2.28.657l-.34-.94a19.87 19.87 0 011.233-.405A12.95 12.95 0 0020 6.99c-.844 0-1.675.087-2.487.246.587.343 1.108.686 1.615 1.071l-.604.797c-.715-.543-1.457-1-2.426-1.51a13.016 13.016 0 00-9.007 10.963 17.602 17.602 0 013.116-.349l.025 1a16.32 16.32 0 00-3.218.389c-.004.132-.014.267-.014.398 0 4.335 2.146 8.33 5.676 10.736-.627-1.87-.95-3.638-.95-5.36 0-.985.169-1.793.347-2.649l.124-.602.981.193-.125.614c-.176.839-.327 1.562-.327 2.443 0 1.952.432 3.973 1.302 6.166a12.844 12.844 0 009.978.821c.502-.99.875-1.927 1.189-3.009l.961.28c-.228.787-.49 1.5-.801 2.21.804-.361 1.564-.81 2.279-1.33-.173-.426-.35-.85-.554-1.26l.895-.446c.171.343.313.701.463 1.054C31.335 27.377 33 23.83 33 19.995zm1 0c0 4.365-1.982 8.403-5.44 11.079a13.69 13.69 0 01-4.042 2.173c-1.44.5-2.961.754-4.518.754-2.3 0-4.584-.573-6.606-1.659A13.98 13.98 0 016.029 19.15C6.37 13.303 10.377 8.245 16 6.57c3.527-1.063 7.589-.632 10.842 1.208A14.015 14.015 0 0134 19.994zm-15.343-7.272l-.658-.753c-1.12.978-1.992 2.017-3.01 3.586l.838.544c.965-1.485 1.784-2.464 2.83-3.377zm-1.845 7.431c2.296.788 4.299 2.047 6.305 3.96l.69-.722c-2.113-2.018-4.233-3.347-6.67-4.184l-.325.946zm7.011-6.828c1.876 2.862 2.933 6.005 3.14 9.34l-.998.061c-.196-3.158-1.198-6.136-2.978-8.852l.836-.549z" fill="#FFF"/></g></svg>`,
+  waf: `<svg height="22" width="22" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="si-waf"><stop stop-color="#BD0816" offset="0%"/><stop stop-color="#FF5252" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h22v22H0z" fill="url(#si-waf)"/><path transform="scale(0.55)" d="M8.138 21H7v-1h1.139a12.277 12.277 0 012.322-6.73l.811.585A11.28 11.28 0 009.139 20H11v1H9.138c.093 2.237.82 4.365 2.134 6.18l-.811.586A12.274 12.274 0 018.138 21zm19.609 9.556A12.25 12.25 0 0121 32.878V34h-1v-1.121a12.274 12.274 0 01-6.749-2.322l.586-.811A11.28 11.28 0 0020 31.879V30h1v1.878a11.26 11.26 0 006.161-2.131l.586.809zM13.251 10.479A12.267 12.267 0 0120 8.157V7h1v1.157c2.443.097 4.768.888 6.747 2.322l-.586.81A11.27 11.27 0 0021 9.157V11h-1V9.157c-2.23.096-4.352.822-6.163 2.133l-.586-.811zM34 20v1h-1.139a12.261 12.261 0 01-2.323 6.766l-.81-.586A11.276 11.276 0 0031.861 21H30v-1h1.86c-.1-2.225-.826-4.34-2.132-6.145l.81-.585A12.264 12.264 0 0132.86 20H34zm-6.294-7.396l3.78-3.78.707.707-3.78 3.781-.707-.708zM13.293 28.431l-3.78 3.78-.707-.707 3.78-3.78.707.707zm1.048-13.383L7.186 7.894l.707-.707 7.155 7.154-.707.707zm13.015 11.601l6.457 6.457-.707.707-6.457-6.457.707-.707zm-11.415-5.285c.042-.074.087-.148.133-.22.927-1.459.625-3.468.329-4.625.817.485 1.553 1.591 1.821 2.088a.472.472 0 00.479.261.497.497 0 00.433-.332c.83-2.358.362-4.107-.232-5.209a3.946 3.946 0 011.71 1.796c.771 1.603.6 3.794-.447 5.718-1.44 2.65-1.121 5.431-.792 6.88a12.413 12.413 0 01-2.236-1.215c-1.654-1.152-2.181-3.411-1.198-5.142zm7.338-.157a.5.5 0 00.807.468c.044-.035.949-.783 1.366-2.603.539.734 1.145 2.271.397 5.168-.726 2.814-4.19 3.581-5.367 3.762-.288-1.025-.906-3.98.564-6.683 1.062-1.952 1.319-4.167.733-5.96 1.037 1.148 1.957 3.001 1.5 5.848zm-8.207-.337c-1.236 2.176-.579 5.012 1.495 6.457.942.657 2.085 1.228 3.395 1.697a.527.527 0 00.169.029c.01 0 .02-.005.029-.006v.005c.229-.018 5.605-.485 6.658-4.562 1.354-5.249-1.349-6.801-1.465-6.865a.499.499 0 00-.737.387 6.643 6.643 0 01-.235 1.203c-.27-4.306-3.674-6.036-4.325-6.328-.677-.519-1.499-.875-2.454-1.045a.502.502 0 00-.407.877c.083.069 1.821 1.574 1.282 4.438-.617-.83-1.631-1.874-2.825-1.874a.5.5 0 00-.466.681c.011.029 1.12 2.952.044 4.643a4.464 4.464 0 00-.158.263z" fill="#FFF"/></g></svg>`,
+};
+
+// ─── Data ───
+const INFO = {
+  edge: {
+    client: {
+      ico:'🖥️', title:'Client',
+      body:`The client makes a standard <span class="chip blue">HTTPS</span> request. It hits a CloudFront URL, which gives you all the added benefits of CloudFront.`
+    },
+    cf: {
+      ico:SVG.cf, title:'Amazon CloudFront',
+      body:`CloudFront is AWS's global CDN and sits at the very edge, closest to the user. Adding it in front of API Gateway gives you:
+      <br><br>
+      <span class="chip purple">Global Edge Locations</span>
+      <span class="chip purple">DDoS Protection (Shield Standard)</span>
+      <span class="chip purple">HTTPS / TLS offload</span>
+      <span class="chip purple">Caching</span>
+      <span class="chip purple">Geo-restriction</span>
+      <br><br>It also acts as the attachment point for <b style="color:#e2e8f0">AWS WAF</b>.`
+    },
+    waf: {
+      ico:SVG.waf, title:'AWS WAF',
+      body:`AWS WAF (Web Application Firewall) inspects every HTTP request and drops malicious ones before they reach your API. It's attached to CloudFront in this pattern.
+      <br><br>
+      <span class="chip red">SQL Injection blocking</span>
+      <span class="chip red">XSS protection</span>
+      <span class="chip red">IP allow / deny lists</span>
+      <span class="chip red">Rate-based rules</span>
+      <span class="chip red">Bot control</span>
+      <span class="chip red">Managed rule groups</span>
+      <br><br>Only traffic that passes all WAF rules continues downstream to API Gateway.`
+    },
+    apigw: {
+      ico:SVG.apigw, title:'API Gateway',
+      body:`API Gateway handles the API layer: auth, routing, throttling, and request validation, but only after CloudFront and WAF have already filtered the traffic. This gives you <b style="color:#e2e8f0">layered defence in depth</b>: the perimeter is hardened before requests ever reach your API logic.
+      <br><br>
+      <span class="chip green">IAM / Cognito Auth</span>
+      <span class="chip green">Rate limiting</span>
+      <span class="chip green">Request validation</span>`
+    },
+    lambda: {
+      ico:SVG.lambda, title:'AWS Lambda',
+      body:`Lambda only ever sees clean, authenticated, WAF-filtered traffic. It focuses entirely on business logic. By the time a request reaches here, every security layer above it has already approved it.
+      <br><br>
+      <span class="chip amber">Event-driven execution</span>
+      <span class="chip amber">No public exposure</span>
+      <span class="chip amber">IAM-scoped invocation</span>`
+    }
+  },
+  vpc: {
+    client: {
+      ico:'🖥️', title:'Client',
+      body:`The client makes a normal HTTPS request to the API Gateway endpoint, but API Gateway has to route the traffic to your hidden apps.`
+    },
+    apigw: {
+      ico:'🔀', title:'API Gateway (HTTP API)',
+      body:`With <b style="color:#e2e8f0">HTTP APIs</b> (as opposed to REST APIs), you can use a <b style="color:#e2e8f0">VPC Link</b> to connect directly to private resources without needing a VPC Endpoint or a Network Load Balancer.
+      <br><br>
+      <span class="chip green">No VPC Endpoint required</span>
+      <span class="chip green">No Network Load Balancer required</span>
+      <span class="chip green">Lower cost & complexity</span>
+      <span class="chip green">Direct connection to ALB or ECS</span>
+      <br><br>The VPC Link is a private, managed connection that bridges API Gateway into your VPC network.`
+    },
+    alb: {
+      ico:'⚖️', title:'Application Load Balancer (ALB)',
+      body:`Via a VPC Link, API Gateway can route directly to an internal ALB sitting inside your private VPC. The ALB then distributes traffic to EC2 instances, ECS tasks, or any registered targets, all without any of them having a public IP.
+      <br><br>
+      <span class="chip indigo">Layer 7 routing</span>
+      <span class="chip indigo">Path & host-based rules</span>
+      <span class="chip indigo">Fully private — no public IP needed</span>`
+    },
+    ecs: {
+      ico:'🐳', title:'Amazon ECS (Containers)',
+      body:`API Gateway's VPC Link can also connect directly to <b style="color:#e2e8f0">ECS container-based apps</b> — tasks running in Fargate or EC2 launch types inside a private VPC.
+      <br><br>
+      <span class="chip teal">No public exposure</span>
+      <span class="chip teal">Direct service integration</span>
+      <span class="chip teal">Works with Fargate & EC2 launch types</span>
+      <br><br>This replaces the old pattern of REST API → VPC Endpoint → NLB → private resource, which required significantly more infrastructure.`
+    }
+  }
+};
+
+let currentTab = 'edge';
+let eSel = 'client';
+let vSel = 'client';
+
+function renderPanel(tab, key) {
+  const d = INFO[tab][key];
+  document.getElementById('p-ico').innerHTML      = d.ico;
+  document.getElementById('p-title').textContent = d.title;
+  document.getElementById('p-body').innerHTML    = d.body;
+}
+
+function epick(key) {
+  eSel = key;
+  document.querySelectorAll('#tab-edge .node').forEach(n => n.classList.remove('sel'));
+  document.getElementById('e-' + key).classList.add('sel');
+  renderPanel('edge', key);
+}
+
+function vpick(key) {
+  vSel = key;
+  document.querySelectorAll('#tab-vpc .node').forEach(n => n.classList.remove('sel'));
+  document.getElementById('v-' + key).classList.add('sel');
+  renderPanel('vpc', key);
+}
+
+function switchTab(name) {
+  currentTab = name;
+  document.querySelectorAll('.canvas').forEach(c => c.classList.remove('visible'));
+  document.getElementById('tab-' + name).classList.add('visible');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+
+  if (name === 'edge') {
+    renderPanel('edge', eSel);
+  } else {
+    renderPanel('vpc', vSel);
+  }
+}
+
+// init
+renderPanel('edge', 'client');
+</script>
+</body>
+</html>
