@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>API Gateway + Lambda Architecture</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
+  #apigw-lambda-diag * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  #apigw-lambda-diag {
     background: #0f1117;
     color: #e2e8f0;
     font-family: 'Segoe UI', system-ui, sans-serif;
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 32px 20px;
   }
 
-  h1 {
-    font-size: 14px;
+  #apigw-lambda-diag h1 {
+    font-size: 17px;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -26,38 +26,38 @@
     margin-bottom: 6px;
   }
 
-  .subtitle {
-    font-size: 12px;
+  #apigw-lambda-diag .subtitle {
+    font-size: 14px;
     color: #334155;
     margin-bottom: 28px;
     text-align: center;
   }
 
-  .toggle-row {
+  #apigw-lambda-diag .toggle-row {
     display: flex;
     gap: 8px;
     margin-bottom: 32px;
   }
 
-  .toggle-btn {
+  #apigw-lambda-diag .toggle-btn {
     padding: 7px 18px;
     border-radius: 20px;
     border: 1px solid #1e293b;
     background: transparent;
     color: #475569;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
     font-family: inherit;
   }
 
-  .toggle-btn.active {
+  #apigw-lambda-diag .toggle-btn.active {
     background: #1e3a5f;
     border-color: #3b82f6;
     color: #93c5fd;
   }
 
-  .diagram {
+  #apigw-lambda-diag .diagram {
     display: flex;
     align-items: center;
     width: 100%;
@@ -66,7 +66,7 @@
     margin-bottom: 28px;
   }
 
-  .node {
+  #apigw-lambda-diag .node {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -75,7 +75,7 @@
     flex-shrink: 0;
   }
 
-  .node-box {
+  #apigw-lambda-diag .node-box {
     width: 80px;
     height: 80px;
     border-radius: 18px;
@@ -87,13 +87,13 @@
     transition: all 0.25s ease;
   }
 
-  .node-box svg { width: 44px; height: 44px; }
+  #apigw-lambda-diag .node-box svg { width: 44px; height: 44px; }
 
-  .node:hover .node-box { transform: translateY(-4px); }
-  .node.active .node-box { transform: translateY(-4px); }
+  #apigw-lambda-diag .node:hover .node-box { transform: translateY(-4px); }
+  #apigw-lambda-diag .node.active .node-box { transform: translateY(-4px); }
 
-  .node-label {
-    font-size: 10px;
+  #apigw-lambda-diag .node-label {
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -102,25 +102,25 @@
     transition: color 0.2s;
   }
 
-  .node.active .node-label { color: #94a3b8; }
+  #apigw-lambda-diag .node.active .node-label { color: #94a3b8; }
 
   /* Client colors */
-  .node.client .node-box { background: #0f172a; border-color: #1e293b; }
-  .node.client.active .node-box { border-color: #60a5fa; box-shadow: 0 0 0 4px rgba(96,165,250,0.1), 0 16px 32px rgba(0,0,0,0.5); }
+  #apigw-lambda-diag .node.client .node-box { background: #0f172a; border-color: #1e293b; }
+  #apigw-lambda-diag .node.client.active .node-box { border-color: #60a5fa; box-shadow: 0 0 0 4px rgba(96,165,250,0.1), 0 16px 32px rgba(0,0,0,0.5); }
 
   /* API GW colors */
-  .node.apigw .node-box { background: #0a1a0f; border-color: #14532d; }
-  .node.apigw.active .node-box { border-color: #4ade80; box-shadow: 0 0 0 4px rgba(74,222,128,0.1), 0 16px 32px rgba(0,0,0,0.5); }
+  #apigw-lambda-diag .node.apigw .node-box { background: #0a1a0f; border-color: #14532d; }
+  #apigw-lambda-diag .node.apigw.active .node-box { border-color: #4ade80; box-shadow: 0 0 0 4px rgba(74,222,128,0.1), 0 16px 32px rgba(0,0,0,0.5); }
 
   /* Lambda colors */
-  .node.lambda .node-box { background: #1c0a00; border-color: #7c2d12; }
-  .node.lambda.active .node-box { border-color: #fb923c; box-shadow: 0 0 0 4px rgba(251,146,60,0.1), 0 16px 32px rgba(0,0,0,0.5); }
+  #apigw-lambda-diag .node.lambda .node-box { background: #1c0a00; border-color: #7c2d12; }
+  #apigw-lambda-diag .node.lambda.active .node-box { border-color: #fb923c; box-shadow: 0 0 0 4px rgba(251,146,60,0.1), 0 16px 32px rgba(0,0,0,0.5); }
 
   /* Dimmed */
-  .node.dimmed { opacity: 0.25; pointer-events: none; }
+  #apigw-lambda-diag .node.dimmed { opacity: 0.25; pointer-events: none; }
 
   /* Arrows */
-  .arrow {
+  #apigw-lambda-diag .arrow {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -131,18 +131,18 @@
     overflow: hidden;
   }
 
-  .arrow-label {
-    font-size: 10px;
+  #apigw-lambda-diag .arrow-label {
+    font-size: 12px;
     color: #334155;
     letter-spacing: 0.04em;
     transition: color 0.3s;
     white-space: nowrap;
   }
 
-  .arrow-label.lit { color: #60a5fa; }
+  #apigw-lambda-diag .arrow-label.lit { color: #60a5fa; }
 
-  .arrow-url {
-    font-size: 9px;
+  #apigw-lambda-diag .arrow-url {
+    font-size: 11px;
     color: #f59e0b;
     letter-spacing: 0.02em;
     white-space: nowrap;
@@ -152,7 +152,7 @@
     text-align: center;
   }
 
-  .arrow-track {
+  #apigw-lambda-diag .arrow-track {
     width: 100%;
     height: 2px;
     background: #1e293b;
@@ -161,9 +161,9 @@
     overflow: hidden;
   }
 
-  .arrow-track.lit { background: #1e3a5f; }
+  #apigw-lambda-diag .arrow-track.lit { background: #1e3a5f; }
 
-  .arrow-track::after {
+  #apigw-lambda-diag .arrow-track::after {
     content: '';
     position: absolute;
     right: 0;
@@ -174,16 +174,16 @@
     border-bottom: 4px solid transparent;
   }
 
-  .arrow-track.lit::after { border-left-color: #3b82f6; }
+  #apigw-lambda-diag .arrow-track.lit::after { border-left-color: #3b82f6; }
 
-  @keyframes slide {
+  @keyframes apigw-lambda-slide {
     0%   { left: -12px; opacity: 0; }
     15%  { opacity: 1; }
     85%  { opacity: 1; }
     100% { left: calc(100%); opacity: 0; }
   }
 
-  .packet {
+  #apigw-lambda-diag .packet {
     position: absolute;
     top: 50%;
     left: -12px;
@@ -193,14 +193,14 @@
     border-radius: 50%;
     background: #3b82f6;
     box-shadow: 0 0 8px #3b82f6;
-    animation: slide 1.4s linear infinite;
+    animation: apigw-lambda-slide 1.4s linear infinite;
     display: none;
   }
 
-  .packet.show { display: block; }
+  #apigw-lambda-diag .packet.show { display: block; }
 
   /* Warning badge for direct mode */
-  .direct-warn {
+  #apigw-lambda-diag .direct-warn {
     position: absolute;
     top: -8px;
     right: -8px;
@@ -208,10 +208,10 @@
     display: none;
   }
 
-  .node.client.direct-mode .direct-warn { display: block; }
+  #apigw-lambda-diag .node.client.direct-mode .direct-warn { display: block; }
 
   /* Panel */
-  .panel {
+  #apigw-lambda-diag .panel {
     width: 100%;
     max-width: 720px;
     background: #111827;
@@ -221,55 +221,57 @@
     min-height: 140px;
   }
 
-  .panel-header {
+  #apigw-lambda-diag .panel-header {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 12px;
   }
 
-  .panel-icon { font-size: 22px; }
+  #apigw-lambda-diag .panel-icon { font-size: 26px; }
 
-  .panel-title {
-    font-size: 14px;
+  #apigw-lambda-diag .panel-title {
+    font-size: 17px;
     font-weight: 700;
     color: #e2e8f0;
   }
 
-  .panel-text {
-    font-size: 13px;
+  #apigw-lambda-diag .panel-text {
+    font-size: 15px;
     line-height: 1.75;
     color: #64748b;
   }
 
-  .chip {
+  #apigw-lambda-diag .chip {
     display: inline-block;
     padding: 2px 9px;
     border-radius: 8px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     margin: 2px 2px;
   }
 
-  .chip.blue  { background: #0f2744; color: #93c5fd; }
-  .chip.green { background: #052e16; color: #86efac; }
-  .chip.amber { background: #431407; color: #fed7aa; }
-  .chip.red   { background: #450a0a; color: #fca5a5; }
+  #apigw-lambda-diag .chip.blue  { background: #0f2744; color: #93c5fd; }
+  #apigw-lambda-diag .chip.green { background: #052e16; color: #86efac; }
+  #apigw-lambda-diag .chip.amber { background: #431407; color: #fed7aa; }
+  #apigw-lambda-diag .chip.red   { background: #450a0a; color: #fca5a5; }
 </style>
 </head>
 <body>
+
+<div id="apigw-lambda-diag">
 
 <h1>AWS API Gateway &amp; Lambda</h1>
 <p class="subtitle">Click any component &nbsp;&bull;&nbsp; Toggle between invocation modes</p>
 
 <div class="toggle-row">
-  <button class="toggle-btn active" id="btn-gw" onclick="setMode('gateway')">🛡️ Via API Gateway</button>
-  <button class="toggle-btn"        id="btn-direct" onclick="setMode('direct')">⚠️ Direct Invocation</button>
+  <button class="toggle-btn active" id="btn-gw" onclick="apigwLambdaSetMode('gateway')">🛡️ Via API Gateway</button>
+  <button class="toggle-btn"        id="btn-direct" onclick="apigwLambdaSetMode('direct')">⚠️ Direct Invocation</button>
 </div>
 
 <div class="diagram" id="diagram">
 
-  <div class="node client active" id="n-client" onclick="pick('client')">
+  <div class="node client active" id="n-client" onclick="apigwLambdaPick('client')">
     <div class="node-box" style="position:relative">
       🖥️<span class="direct-warn">⚠️</span>
     </div>
@@ -284,7 +286,7 @@
     </div>
   </div>
 
-  <div class="node apigw" id="n-apigw" onclick="pick('apigw')">
+  <div class="node apigw" id="n-apigw" onclick="apigwLambdaPick('apigw')">
     <div class="node-box"><svg height="40" width="40" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="apigw-grad"><stop stop-color="#4D27A8" offset="0%"></stop><stop stop-color="#A166FF" offset="100%"></stop></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h40v40H0z" fill="url(#apigw-grad)"></path><path d="M19 28h2v-1h-2v1zM14 7.262l-7 3.04v20.055l7 2.439V7.262zM15 13v14h2v1h-2v5.5a.5.5 0 01-.664.472l-8-2.787A.5.5 0 016 30.713V9.974c0-.199.118-.379.301-.458l8-3.474A.5.5 0 0115 6.5V12h2v1h-2zm18-2.698l-7-3.04v25.534l7-2.439V10.302zm1-.328v20.739a.5.5 0 01-.336.472l-8 2.787a.507.507 0 01-.454-.064.5.5 0 01-.21-.408V28h-2v-1h2V13h-2v-1h2V6.5a.5.5 0 01.699-.458l8 3.474a.499.499 0 01.301.458zM19 13h2v-1h-2v1zm4.975 2.658l-.95-.316-3 9 .95.316 3-9zm-4.829 7.196l-3-3a.502.502 0 010-.708l3-3 .708.708-2.647 2.646 2.647 2.646-.708.708z" fill="#FFF"></path></g></svg></div>
     <div class="node-label">API Gateway</div>
   </div>
@@ -297,7 +299,7 @@
     </div>
   </div>
 
-  <div class="node lambda" id="n-lambda" onclick="pick('lambda')">
+  <div class="node lambda" id="n-lambda" onclick="apigwLambdaPick('lambda')">
     <div class="node-box"><svg height="40" width="40" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="lambda-grad"><stop stop-color="#C8511B" offset="0%"></stop><stop stop-color="#F90" offset="100%"></stop></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h40v40H0z" fill="url(#lambda-grad)"></path><path d="M14.386 33H8.27l6.763-14.426 3.064 6.44L14.387 33zm1.085-15.798a.49.49 0 00-.442-.282h-.002a.493.493 0 00-.441.285l-7.538 16.08a.507.507 0 00.028.482c.09.145.247.233.415.233h7.206c.19 0 .363-.111.445-.286l3.944-8.489a.508.508 0 00-.002-.432l-3.613-7.591zM32.018 33h-5.882l-9.47-20.711a.491.491 0 00-.444-.289H12.37l.005-5h7.549l9.424 20.71c.08.177.256.29.446.29h2.224v5zm.49-6h-2.4L20.684 6.29a.492.492 0 00-.446-.29h-8.353a.496.496 0 00-.491.5l-.006 6c0 .132.052.259.144.354a.488.488 0 00.347.146h4.032l9.468 20.711c.08.176.254.289.445.289h6.686a.495.495 0 00.491-.5v-6c0-.276-.219-.5-.491-.5z" fill="#FFF"></path></g></svg></div>
     <div class="node-label">Lambda</div>
   </div>
@@ -312,121 +314,126 @@
   <div class="panel-text" id="p-body"></div>
 </div>
 
+</div><!-- /#apigw-lambda-diag -->
+
 <script>
-const ICONS = {
-  apigw: `<svg height="22" width="22" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="pi-apigw"><stop stop-color="#4D27A8" offset="0%"/><stop stop-color="#A166FF" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h22v22H0z" fill="url(#pi-apigw)"/><path transform="scale(0.55)" d="M19 28h2v-1h-2v1zM14 7.262l-7 3.04v20.055l7 2.439V7.262zM15 13v14h2v1h-2v5.5a.5.5 0 01-.664.472l-8-2.787A.5.5 0 016 30.713V9.974c0-.199.118-.379.301-.458l8-3.474A.5.5 0 0115 6.5V12h2v1h-2zm18-2.698l-7-3.04v25.534l7-2.439V10.302zm1-.328v20.739a.5.5 0 01-.336.472l-8 2.787a.507.507 0 01-.454-.064.5.5 0 01-.21-.408V28h-2v-1h2V13h-2v-1h2V6.5a.5.5 0 01.699-.458l8 3.474a.499.499 0 01.301.458zM19 13h2v-1h-2v1zm4.975 2.658l-.95-.316-3 9 .95.316 3-9zm-4.829 7.196l-3-3a.502.502 0 010-.708l3-3 .708.708-2.647 2.646 2.647 2.646-.708.708z" fill="#FFF"/></g></svg>`,
-  lambda: `<svg height="22" width="22" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="pi-lambda"><stop stop-color="#C8511B" offset="0%"/><stop stop-color="#F90" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h22v22H0z" fill="url(#pi-lambda)"/><path transform="scale(0.55)" d="M14.386 33H8.27l6.763-14.426 3.064 6.44L14.387 33zm1.085-15.798a.49.49 0 00-.442-.282h-.002a.493.493 0 00-.441.285l-7.538 16.08a.507.507 0 00.028.482c.09.145.247.233.415.233h7.206c.19 0 .363-.111.445-.286l3.944-8.489a.508.508 0 00-.002-.432l-3.613-7.591zM32.018 33h-5.882l-9.47-20.711a.491.491 0 00-.444-.289H12.37l.005-5h7.549l9.424 20.71c.08.177.256.29.446.29h2.224v5zm.49-6h-2.4L20.684 6.29a.492.492 0 00-.446-.29h-8.353a.496.496 0 00-.491.5l-.006 6c0 .132.052.259.144.354a.488.488 0 00.347.146h4.032l9.468 20.711c.08.176.254.289.445.289h6.686a.495.495 0 00.491-.5v-6c0-.276-.219-.5-.491-.5z" fill="#FFF"/></g></svg>`,
-};
+(function() {
+  const ICONS = {
+    apigw: `<svg height="22" width="22" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="pi-apigw"><stop stop-color="#4D27A8" offset="0%"/><stop stop-color="#A166FF" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h22v22H0z" fill="url(#pi-apigw)"/><path transform="scale(0.55)" d="M19 28h2v-1h-2v1zM14 7.262l-7 3.04v20.055l7 2.439V7.262zM15 13v14h2v1h-2v5.5a.5.5 0 01-.664.472l-8-2.787A.5.5 0 016 30.713V9.974c0-.199.118-.379.301-.458l8-3.474A.5.5 0 0115 6.5V12h2v1h-2zm18-2.698l-7-3.04v25.534l7-2.439V10.302zm1-.328v20.739a.5.5 0 01-.336.472l-8 2.787a.507.507 0 01-.454-.064.5.5 0 01-.21-.408V28h-2v-1h2V13h-2v-1h2V6.5a.5.5 0 01.699-.458l8 3.474a.499.499 0 01.301.458zM19 13h2v-1h-2v1zm4.975 2.658l-.95-.316-3 9 .95.316 3-9zm-4.829 7.196l-3-3a.502.502 0 010-.708l3-3 .708.708-2.647 2.646 2.647 2.646-.708.708z" fill="#FFF"/></g></svg>`,
+    lambda: `<svg height="22" width="22" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="pi-lambda"><stop stop-color="#C8511B" offset="0%"/><stop stop-color="#F90" offset="100%"/></linearGradient></defs><g fill="none" fill-rule="evenodd"><path d="M0 0h22v22H0z" fill="url(#pi-lambda)"/><path transform="scale(0.55)" d="M14.386 33H8.27l6.763-14.426 3.064 6.44L14.387 33zm1.085-15.798a.49.49 0 00-.442-.282h-.002a.493.493 0 00-.441.285l-7.538 16.08a.507.507 0 00.028.482c.09.145.247.233.415.233h7.206c.19 0 .363-.111.445-.286l3.944-8.489a.508.508 0 00-.002-.432l-3.613-7.591zM32.018 33h-5.882l-9.47-20.711a.491.491 0 00-.444-.289H12.37l.005-5h7.549l9.424 20.71c.08.177.256.29.446.29h2.224v5zm.49-6h-2.4L20.684 6.29a.492.492 0 00-.446-.29h-8.353a.496.496 0 00-.491.5l-.006 6c0 .132.052.259.144.354a.488.488 0 00.347.146h4.032l9.468 20.711c.08.176.254.289.445.289h6.686a.495.495 0 00.491-.5v-6c0-.276-.219-.5-.491-.5z" fill="#FFF"/></g></svg>`,
+  };
 
-const DATA = {
-  gateway: {
-    client: {
-      icon: '🖥️', title: 'Client',
-      body: `The client (a browser, mobile app, or upstream service) makes a standard <span class="chip blue">HTTPS</span> request to your API URL. It has <b style="color:#e2e8f0">no idea Lambda exists</b>. It just talks to an API.`
+  const DATA = {
+    gateway: {
+      client: {
+        icon: '🖥️', title: 'Client',
+        body: `The client (a browser, mobile app, or upstream service) makes a standard <span class="chip blue">HTTPS</span> request to your API URL. It has <b style="color:#e2e8f0">no idea Lambda exists</b>. It just talks to an API.`
+      },
+      apigw: {
+        icon: ICONS.apigw, title: 'API Gateway',
+        body: `API Gateway is the public-facing front door. It enforces your security policy <em>before</em> Lambda ever runs:
+        <br><br>
+        <span class="chip green">IAM Auth</span>
+        <span class="chip green">API Keys</span>
+        <span class="chip green">Cognito / JWT</span>
+        <span class="chip green">Rate Limiting</span>
+        <span class="chip green">Request Validation</span>
+        <span class="chip green">CORS</span>
+        <span class="chip green">TLS Termination</span>
+        <br><br>Clients get a <b style="color:#e2e8f0">stable, versioned endpoint</b>. You can swap out Lambda entirely without clients noticing.`
+      },
+      lambda: {
+        icon: ICONS.lambda, title: 'AWS Lambda',
+        body: `With this setup, Lambda executes your business logic in response to events forwarded by API Gateway. It is <b style="color:#e2e8f0">never exposed directly</b> to the public internet in this pattern. Only API Gateway can invoke it, using an IAM-scoped role.
+        <br><br>
+        <span class="chip amber">Event-driven</span>
+        <span class="chip amber">Serverless</span>
+        <span class="chip amber">IAM Role-scoped</span>
+        <span class="chip amber">Reduced attack surface</span>`
+      }
     },
-    apigw: {
-      icon: ICONS.apigw, title: 'API Gateway',
-      body: `API Gateway is the public-facing front door. It enforces your security policy <em>before</em> Lambda ever runs:
-      <br><br>
-      <span class="chip green">IAM Auth</span>
-      <span class="chip green">API Keys</span>
-      <span class="chip green">Cognito / JWT</span>
-      <span class="chip green">Rate Limiting</span>
-      <span class="chip green">Request Validation</span>
-      <span class="chip green">CORS</span>
-      <span class="chip green">TLS Termination</span>
-      <br><br>Clients get a <b style="color:#e2e8f0">stable, versioned endpoint</b>. You can swap out Lambda entirely without clients noticing.`
-    },
-    lambda: {
-      icon: ICONS.lambda, title: 'AWS Lambda',
-      body: `With this setup, Lambda executes your business logic in response to events forwarded by API Gateway. It is <b style="color:#e2e8f0">never exposed directly</b> to the public internet in this pattern. Only API Gateway can invoke it, using an IAM-scoped role.
-      <br><br>
-      <span class="chip amber">Event-driven</span>
-      <span class="chip amber">Serverless</span>
-      <span class="chip amber">IAM Role-scoped</span>
-      <span class="chip amber">Reduced attack surface</span>`
+    direct: {
+      client: {
+        icon: '⚠️', title: 'Direct Invocation',
+        body: `Calling Lambda directly (ie via a public Function URL) makes it more difficult to add security layers.
+        <br><br>
+        <span class="chip red">No rate limiting</span>
+        <span class="chip red">Exposed function URL</span>`
+      },
+      lambda: {
+        icon: 'λ', title: 'AWS Lambda (Directly Exposed)',
+        body: `Lambda can be invoked directly via its <span class="chip amber">Function URL</span>. Auth is possible with IAM, but you lose the rich API management features that API Gateway provides. You can still use direct invocation for debugging, internal automation, or event-driven pipelines, but not public APIs.`
+      }
     }
-  },
-  direct: {
-    client: {
-      icon: '⚠️', title: 'Direct Invocation',
-      body: `Calling Lambda directly (ie via a public Function URL) makes it more difficult to add security layers.
-      <br><br>
-      <span class="chip red">No rate limiting</span>
-      <span class="chip red">Exposed function URL</span>`
-    },
-    lambda: {
-      icon: 'λ', title: 'AWS Lambda (Directly Exposed)',
-      body: `Lambda can be invoked directly via its <span class="chip amber">Function URL</span>. Auth is possible with IAM, but you lose the rich API management features that API Gateway provides. You can still use direct invocation for debugging, internal automation, or event-driven pipelines, but not public APIs.`
-    }
-  }
-};
+  };
 
-let mode = 'gateway';
-let selected = 'client';
+  const root = document.getElementById('apigw-lambda-diag');
+  let mode = 'gateway';
+  let selected = 'client';
 
-function pick(node) {
-  selected = node;
-  document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
-  document.getElementById('n-' + node).classList.add('active');
-  renderPanel();
-}
-
-function renderPanel() {
-  const modeData = DATA[mode];
-  const info = modeData[selected] || modeData['client'];
-  document.getElementById('p-icon').innerHTML = info.icon;
-  document.getElementById('p-title').textContent = info.title;
-  document.getElementById('p-body').innerHTML = info.body;
-}
-
-function setMode(m) {
-  mode = m;
-  document.getElementById('btn-gw').classList.toggle('active', m === 'gateway');
-  document.getElementById('btn-direct').classList.toggle('active', m === 'direct');
-
-  const apigw  = document.getElementById('n-apigw');
-  const a1     = document.getElementById('a1');
-  const a1lbl  = document.getElementById('a1-lbl');
-  const a1url  = document.getElementById('a1-url');
-  const a1trk  = document.getElementById('a1-track');
-  const a2lbl  = document.getElementById('a2-lbl');
-  const a2url  = document.getElementById('a2-url');
-  const a2trk  = document.getElementById('a2-track');
-  const p1     = document.getElementById('p1');
-  const p2     = document.getElementById('p2');
-  const client = document.getElementById('n-client');
-
-  if (m === 'direct') {
-    apigw.style.display = 'none';
-    a1.style.display    = 'none';
-    a1url.textContent   = '';
-    a2lbl.textContent = 'Direct Call';
-    a2lbl.classList.remove('lit');
-    a2url.textContent = 'https://abc123.lambda-url.us-east-1.on.aws/';
-    a2trk.classList.remove('lit');
-    p2.classList.remove('show');
-    client.classList.add('direct-mode');
-    if (selected === 'apigw') { pick('client'); return; }
-  } else {
-    apigw.style.display = '';
-    a1.style.display    = '';
-    a1lbl.textContent = 'HTTPS Request';
-    a1lbl.classList.add('lit');
-    a1url.textContent = 'https://api.example.com/prod/items';
-    a1trk.classList.add('lit');
-    p1.classList.add('show');
-    a2lbl.textContent = 'Invoke';
-    a2url.textContent = '';
-    a2trk.classList.add('lit');
-    p2.classList.add('show');
-    client.classList.remove('direct-mode');
+  function renderPanel() {
+    const modeData = DATA[mode];
+    const info = modeData[selected] || modeData['client'];
+    root.querySelector('#p-icon').innerHTML = info.icon;
+    root.querySelector('#p-title').textContent = info.title;
+    root.querySelector('#p-body').innerHTML = info.body;
   }
 
-  renderPanel();
-}
+  window.apigwLambdaPick = function(node) {
+    selected = node;
+    root.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+    root.querySelector('#n-' + node).classList.add('active');
+    renderPanel();
+  };
 
-renderPanel();
+  window.apigwLambdaSetMode = function(m) {
+    mode = m;
+    root.querySelector('#btn-gw').classList.toggle('active', m === 'gateway');
+    root.querySelector('#btn-direct').classList.toggle('active', m === 'direct');
+
+    const apigw  = root.querySelector('#n-apigw');
+    const a1     = root.querySelector('#a1');
+    const a1lbl  = root.querySelector('#a1-lbl');
+    const a1url  = root.querySelector('#a1-url');
+    const a1trk  = root.querySelector('#a1-track');
+    const a2lbl  = root.querySelector('#a2-lbl');
+    const a2url  = root.querySelector('#a2-url');
+    const a2trk  = root.querySelector('#a2-track');
+    const p1     = root.querySelector('#p1');
+    const p2     = root.querySelector('#p2');
+    const client = root.querySelector('#n-client');
+
+    if (m === 'direct') {
+      apigw.style.display = 'none';
+      a1.style.display    = 'none';
+      a1url.textContent   = '';
+      a2lbl.textContent = 'Direct Call';
+      a2lbl.classList.remove('lit');
+      a2url.textContent = 'https://abc123.lambda-url.us-east-1.on.aws/';
+      a2trk.classList.remove('lit');
+      p2.classList.remove('show');
+      client.classList.add('direct-mode');
+      if (selected === 'apigw') { apigwLambdaPick('client'); return; }
+    } else {
+      apigw.style.display = '';
+      a1.style.display    = '';
+      a1lbl.textContent = 'HTTPS Request';
+      a1lbl.classList.add('lit');
+      a1url.textContent = 'https://api.example.com/prod/items';
+      a1trk.classList.add('lit');
+      p1.classList.add('show');
+      a2lbl.textContent = 'Invoke';
+      a2url.textContent = '';
+      a2trk.classList.add('lit');
+      p2.classList.add('show');
+      client.classList.remove('direct-mode');
+    }
+
+    renderPanel();
+  };
+
+  renderPanel();
+})();
 </script>
 </body>
 </html>
